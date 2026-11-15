@@ -8,6 +8,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+!.env.test.example
 
 # Logs
 logs
@@ -20,3 +21,8 @@ npm-debug.log*
 .idea
 .DS_Store
 *.sw?
+
+# Playwright (auth state holds a live session cookie; reports/traces can too)
+/test-results/
+/playwright-report/
+/playwright/.auth/
