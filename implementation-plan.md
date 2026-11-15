@@ -148,7 +148,8 @@ SendGrid has no drafts, so the reviewed draft stays in the app and is sent only 
 - [ ] 12.2 Create the Railway `web` service from this repo, using the Dockerfile. Set the build-time variable `VITE_API_URL` to the API's URL (for example `https://api.example.com`).
 - [ ] 12.3 Attach the custom domain (`app.` subdomain) to `web`, and make sure the backend's cookie domain and allowed origin match it.
 - [ ] 12.4 Give the deployed frontend URL to the backend as its allowed CORS origin (credentials enabled).
-- [ ] 12.5 Smoke test in production: log in, reload and stay logged in, create a company, draft an email, send it with SendGrid, complete a task.
+- [ ] 12.5 Add security headers to the static server config (nginx `add_header`, or `serve.json` if using `serve`): `Content-Security-Policy: default-src 'self'; connect-src 'self' <API origin>; img-src 'self' data:; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy: strict-origin-when-cross-origin`. Check the browser console for CSP violations after deploying. Also confirm `VITE_API_URL` is `https://`.
+- [ ] 12.6 Smoke test in production: log in, reload and stay logged in, create a company, draft an email, send it with SendGrid, complete a task.
 
 **Needs from backend:** the deployed API and Postgres (BE Phase 12).
 **Done when:** you can run a real day of outreach from the deployed app.
