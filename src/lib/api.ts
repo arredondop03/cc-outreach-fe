@@ -1,9 +1,5 @@
 import axios from 'axios'
 
-import type { components } from '@/lib/api-types'
-
-export type Company = components['schemas']['Company']
-
 type ApiError = {
   error: {
     message: string

@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { Input } from '@/components/ui/input'
-import { api, type Company } from '@/lib/api'
+import { api } from '@/lib/api'
+import type { Company } from '@/lib/types'
 
 const statuses: Company['status'][] = ['new', 'ready_for_sequence', 'active', 'archived']
 const label = (text: string) => text.replaceAll('_', ' ')
