@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "gen:api": "npm --prefix ../cc-outreach-be run -s openapi:dump | npx -y openapi-typescript@7 -o src/lib/api-types.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

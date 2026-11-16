@@ -12,6 +12,10 @@ Steps:
 
 Do not use Context7 for refactoring, business-logic debugging, code review, or general programming concepts.
 
+## Code style
+
+- Always use descriptive variable names, including in callbacks and loops (`company`, `event`, `error`, never `c`, `e`, `q`).
+
 ## Backend
 
 Sibling repo at `../cc-outreach-be`. Auth is **Better Auth** (routes under `/api/auth/*`), used here through the Better Auth React client. Check its code and `backend-implementation-plan.md` before answering questions about API behavior, and say so if you haven't checked.
