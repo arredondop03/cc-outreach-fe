@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
 import { Input } from '@/components/ui/input'
-import { apiGet, type Company } from '@/lib/api'
+import { api, type Company } from '@/lib/api'
 
 const statuses: Company['status'][] = ['new', 'ready_for_sequence', 'active', 'archived']
 const label = (text: string) => text.replaceAll('_', ' ')
@@ -14,16 +15,13 @@ const badge: Record<Company['status'], string> = {
 }
 
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<Company[]>()
-  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [selectedStatuses, setSelectedStatuses] = useState<Company['status'][]>(['new', 'ready_for_sequence', 'active'])
 
-  useEffect(() => {
-    apiGet<Company[]>('/companies')
-      .then(setCompanies)
-      .catch((error: Error) => setError(error.message))
-  }, [])
+  const { data: companies, error } = useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => (await api.get<Company[]>('/companies')).data,
+  })
 
   const searchText = search.trim().toLowerCase()
   const rows = (companies ?? []).filter(
@@ -68,7 +66,7 @@ export default function CompaniesPage() {
       </div>
       {error && (
         <p role="alert" className="text-destructive text-sm">
-          {error}
+          {error.message}
         </p>
       )}
       {!error && !companies && <p className="text-muted-foreground text-sm">Loading…</p>}

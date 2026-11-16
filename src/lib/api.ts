@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 import type { components } from '@/lib/api-types'
 
 export type Company = components['schemas']['Company']
@@ -9,18 +11,21 @@ type ApiError = {
   }
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
-    credentials: 'include',
-  })
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+})
 
-  if (res.status === 401) {
+api.interceptors.response.use(undefined, (axiosError) => {
+  if (axiosError.response?.status === 401) {
     window.location.assign('/login')
   }
 
-  if (!res.ok) {
-    const { error } = (await res.json()) as ApiError
-    throw new Error(error.details ? `${error.message}: ${JSON.stringify(error.details)}` : error.message)
-  }
-  return res.json() as Promise<T>
-}
+  // Network failures have no response body; let axios's own error through.
+  const body = axiosError.response?.data as ApiError | undefined
+
+  if (!body) return Promise.reject(axiosError)
+
+  const { message, details } = body.error
+  return Promise.reject(new Error(details ? `${message}: ${JSON.stringify(details)}` : message))
+})
