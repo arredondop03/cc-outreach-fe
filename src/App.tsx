@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 
 import AppShell from '@/components/AppShell'
 import RequireAuth from '@/components/RequireAuth'
+import CompanyDetailPage from '@/pages/CompanyDetailPage'
 import CompaniesPage from '@/pages/CompaniesPage'
 import ContactsPage from '@/pages/ContactsPage'
 import LoginPage from '@/pages/LoginPage'
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
           { path: 'today', Component: TodayPage },
           { path: 'week', Component: WeekPage },
           { path: 'companies', Component: CompaniesPage },
+          { path: 'companies/:id', Component: CompanyDetailPage },
           { path: 'contacts', Component: ContactsPage },
         ],
       },

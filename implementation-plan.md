@@ -63,7 +63,7 @@ The backend runs Better Auth (mounted at `/api/auth/*`), and the frontend uses t
 ## Phase 4: Companies and contacts CRUD
 
 - [ ] 4.1 Companies list with status filter and search.
-- [ ] 4.2 Company detail page with its contacts.
+- [ ] 4.2 Company detail page with its contacts. (Company details done; contacts pending a backend endpoint.)
 - [ ] 4.3 Forms to create and edit companies and contacts, with delete confirmation.
 - [ ] 4.4 Archive action with a confirmation that explains the cascade.
 

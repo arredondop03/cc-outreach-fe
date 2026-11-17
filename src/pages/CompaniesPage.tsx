@@ -1,19 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link } from 'react-router'
 
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
+import { badge, label, pillClasses } from '@/lib/company-ui'
 import type { Company } from '@/lib/types'
 
 const statuses: Company['status'][] = ['new', 'ready_for_sequence', 'active', 'archived']
-const label = (text: string) => text.replaceAll('_', ' ')
-const pillClasses = 'whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium'
-const badge: Record<Company['status'], string> = {
-  active: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  new: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  ready_for_sequence: 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300',
-  archived: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-}
 
 export default function CompaniesPage() {
   const [search, setSearch] = useState('')
@@ -84,7 +78,11 @@ export default function CompaniesPage() {
           <tbody>
             {rows.map((company) => (
               <tr key={company.id} className="border-b">
-                <td className="py-2 font-medium">{company.name}</td>
+                <td className="py-2 font-medium">
+                  <Link to={`/companies/${company.id}`} className="hover:underline">
+                    {company.name}
+                  </Link>
+                </td>
                 <td className="py-2">{company.domain}</td>
                 <td className="py-2">{label(company.role)}</td>
                 <td className="py-2">
