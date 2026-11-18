@@ -13,13 +13,34 @@ You write and repair end-to-end tests for a React 19 + Vite + TypeScript fronten
 - Secrets come from `.env.test` (git-ignored). Never print, commit, or hardcode them. Never point tests at a non-local or non-`*_test` database.
 - Read existing specs first and match their style: fixtures, auth handling, selectors, helpers.
 
+## What belongs in e2e (and what doesn't)
+
+E2E tests run the real browser, frontend, backend and database. They are slow, so keep them few and valuable. Unit tests (Vitest + React Testing Library in `src/**/*.test.tsx`, API mocked) cover the rest.
+
+Write e2e tests for:
+- Whole user flows that cross layers: log in, open the companies list, filter, click through to a company, use its actions, and see the result after a reload.
+- Anything that depends on the real backend: cookie sessions, redirects to `/login`, and the API contract between the frontend and `../cc-outreach-be` (generated types can drift from reality).
+- Behavior only a real browser shows: a drawer opening and closing, focus handling, links that actually navigate.
+- A few critical paths per feature, not every field or branch.
+
+Leave to unit tests (don't write e2e for them, and say so in your report if you spot one):
+- A component's rendering from props or mocked data, such as a badge shown only when a field is set.
+- Form validation messages, how a form builds its request body, and create vs edit branching.
+- Error, loading and empty states that are awkward to reach with real data.
+- Small pure helpers.
+
+Rule of thumb: if a bug could be caught by mocking the API, it's a unit test. If it only appears when browser, frontend and backend run together, it's e2e.
+
 ## Writing new tests
 
 1. Find what changed: `git diff main...HEAD --stat`, then read the changed pages/components and the backend routes they call.
-2. Test only what the frontend actually does. Never test backend behavior directly (no API-only tests), and never test a flow (create, edit, delete, ...) that has no UI yet; report it as a gap instead. Cover the feature's real behavior, then edge cases. Think: empty state, validation errors, duplicates, long/special-character input, unauthenticated access and redirects, filter/search with no results, and state surviving a reload or navigation.
+2. Test only what the frontend actually does. Never test backend behavior directly (no API-only tests), and never test a flow (create, edit, delete, ...) that has no UI yet; report it as a gap instead. Cover the feature's real behavior.
 3. Prefer user-facing locators (`getByRole`, `getByLabel`, `getByText`); use `data-testid` only when nothing semantic works. Rely on Playwright auto-waiting and web-first assertions (`expect(locator).toBeVisible()`); never use fixed `waitForTimeout`.
 4. No mocks: never use `page.route`, request interception, or stubbed responses. Tests hit the real backend and database.
-5. Seed data outside the tests, never inside them. If a test needs rows in the database, add them to a shared fixture file (e.g. `e2e/seed-companies.ts`) and create them in a step of `e2e/global.setup.ts`; tests then import and read those fixtures. Tests must not create or modify data themselves. Keep tests independent of order and parallel-safe by treating seeded data as read-only.
+5. Data depends on what the test does:
+   - Tests that only read data (list, filter, search, detail page) use seeded fixtures. Add rows to a shared fixture file (e.g. `e2e/seed-companies.ts`) and create them in a step of `e2e/global.setup.ts`; tests import and read those fixtures, and treat them as read-only.
+   - Tests that create, edit, archive or delete data do it through the UI, as the feature under test. A create test creates its own record. An edit or archive test either creates its record first through the UI, or uses a dedicated seeded row that only that one test touches. Never mutate a seeded row that other tests read.
+   - Keep tests independent of order and parallel-safe: give every record a unique name (e.g. add a timestamp or random suffix) so tests never collide, and assert on that record, not on counts of the whole table. The test database is wiped once per run by `global.setup.ts`, not once per test, so tests don't need to clean up. It also means data from other tests in the same run is visible.
 6. Use descriptive variable names (`company`, `event`, `error`; never `c`, `e`, `q`).
 7. One behavior per test, with a name that states the expected outcome. Don't test implementation details or third-party libraries.
 

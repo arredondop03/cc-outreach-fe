@@ -1,4 +1,4 @@
-// Companies the global setup creates before any test runs; the page only displays them, so specs read these.
+// Companies the global setup creates before any test runs. Treat them as read-only fixtures for tests that only read data.
 export const seedCompanies = {
   newCompany: {
     name: 'Globex',
@@ -23,17 +23,5 @@ export const seedCompanies = {
     domain: 'piedpiper.example.com',
     role: 'fs',
     status: 'archived',
-  },
-  specialCharacters: {
-    name: `<b>O'Reilly & "Sons"</b>`,
-    domain: 'oreilly.example.com',
-    role: 'fe',
-    status: 'new',
-  },
-  longName: {
-    name: `LongName-${'x'.repeat(200)}`,
-    domain: 'long.example.com',
-    role: 'fe',
-    status: 'new',
   },
 }

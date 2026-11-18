@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
 
-test('logged-in user sees the app shell', async ({ page }) => {
-  await page.goto('/')
-  await expect(page).toHaveURL('/today')
-  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
+test('session survives a reload on a protected page', async ({ page }) => {
+  await page.goto('/companies')
+  await page.reload()
+  await expect(page).toHaveURL('/companies')
+  await expect(page.getByRole('heading', { name: 'Companies' })).toBeVisible()
 })
 
 test.describe('logged out', () => {
