@@ -1,13 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { Pencil } from 'lucide-react'
+import { Pencil, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm, type Control } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Sheet,
   SheetContent,
@@ -18,11 +25,14 @@ import {
 } from '@/components/ui/sheet'
 import { api } from '@/lib/api'
 import { label } from '@/lib/company-ui'
+import { Textarea } from '@/components/ui/textarea'
 import type { Company } from '@/lib/types'
 
 const statuses: Company['status'][] = ['new', 'ready_for_sequence', 'active', 'archived']
-const nativeFieldClasses =
-  'border-input bg-background w-full rounded-lg border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+const roles = { fe: 'Frontend', fs: 'Full stack' }
+const statusItems = Object.fromEntries(
+  statuses.map((companyStatus) => [companyStatus, label(companyStatus)]),
+)
 
 const optionalUrl = z.union([z.literal(''), z.url('Enter a valid URL.')])
 
@@ -39,29 +49,36 @@ const companySchema = z.object({
 
 type CompanyValues = z.infer<typeof companySchema>
 
-export default function EditCompanySheet({ company }: { company: Company }) {
+// Create mode when no company is passed, edit mode otherwise.
+export default function CompanyFormSheet({ company }: { company?: Company }) {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CompanyValues>({
     resolver: zodResolver(companySchema),
     defaultValues: toFormValues(company),
   })
 
+  const logoUrl = watch('logoUrl')
+
   async function onSubmit(values: CompanyValues) {
     try {
-      await api.patch(`/companies/${company.id}`, {
+      const body = {
         ...values,
         summary: values.summary.trim() || null,
         logoUrl: values.logoUrl || null,
         jobPostUrl: values.jobPostUrl || null,
-      })
+      }
+      if (company) await api.patch(`/companies/${company.id}`, body)
+      else await api.post('/companies', body)
       await queryClient.invalidateQueries({ queryKey: ['companies'] })
       setIsOpen(false)
     } catch (error) {
@@ -80,13 +97,23 @@ export default function EditCompanySheet({ company }: { company: Company }) {
         setIsOpen(nextOpen)
       }}
     >
-      <SheetTrigger render={<Button variant="outline" size="icon" aria-label="Edit company" />}>
-        <Pencil />
-      </SheetTrigger>
+      {company ? (
+        <SheetTrigger render={<Button variant="outline" size="icon" aria-label="Edit company" />}>
+          <Pencil />
+        </SheetTrigger>
+      ) : (
+        <SheetTrigger render={<Button />}>
+          <Plus /> New company
+        </SheetTrigger>
+      )}
       <SheetContent side="right" className="overflow-y-auto data-[side=right]:sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Edit company</SheetTitle>
-          <SheetDescription>Changes are saved to {company.name}.</SheetDescription>
+          <SheetTitle>{company ? 'Edit company' : 'New company'}</SheetTitle>
+          <SheetDescription>
+            {company
+              ? `Changes are saved to ${company.name}.`
+              : 'Add a company to your outreach list.'}
+          </SheetDescription>
         </SheetHeader>
         <form noValidate onSubmit={handleSubmit(onSubmit)} className="px-4 pb-4">
           <FieldGroup>
@@ -102,17 +129,20 @@ export default function EditCompanySheet({ company }: { company: Company }) {
             </Field>
             <Field>
               <FieldLabel htmlFor="summary">Summary</FieldLabel>
-              <textarea
-                id="summary"
-                rows={4}
-                className={nativeFieldClasses}
-                {...register('summary')}
-              />
+              <Textarea id="summary" rows={4} {...register('summary')} />
             </Field>
             <Field data-invalid={!!errors.logoUrl}>
               <FieldLabel htmlFor="logoUrl">Logo URL</FieldLabel>
               <Input id="logoUrl" aria-invalid={!!errors.logoUrl} {...register('logoUrl')} />
               <FieldError errors={[errors.logoUrl]} />
+              {logoUrl && z.url().safeParse(logoUrl).success && (
+                <img
+                  key={logoUrl}
+                  src={logoUrl}
+                  alt="Logo preview"
+                  className="size-16 rounded object-contain"
+                />
+              )}
             </Field>
             <Field data-invalid={!!errors.jobPostUrl}>
               <FieldLabel htmlFor="jobPostUrl">Job post URL</FieldLabel>
@@ -134,20 +164,11 @@ export default function EditCompanySheet({ company }: { company: Company }) {
             </Field>
             <Field>
               <FieldLabel htmlFor="role">Role</FieldLabel>
-              <select id="role" className={nativeFieldClasses} {...register('role')}>
-                <option value="fe">Frontend</option>
-                <option value="fs">Full stack</option>
-              </select>
+              <ChoiceSelect id="role" name="role" control={control} items={roles} />
             </Field>
             <Field>
               <FieldLabel htmlFor="status">Status</FieldLabel>
-              <select id="status" className={nativeFieldClasses} {...register('status')}>
-                {statuses.map((companyStatus) => (
-                  <option key={companyStatus} value={companyStatus}>
-                    {label(companyStatus)}
-                  </option>
-                ))}
-              </select>
+              <ChoiceSelect id="status" name="status" control={control} items={statusItems} />
             </Field>
             <FieldError errors={[errors.root?.server]} />
             <Button type="submit" disabled={isSubmitting}>
@@ -160,7 +181,19 @@ export default function EditCompanySheet({ company }: { company: Company }) {
   )
 }
 
-function toFormValues(company: Company): CompanyValues {
+function toFormValues(company?: Company): CompanyValues {
+  if (!company) {
+    return {
+      name: '',
+      domain: '',
+      summary: '',
+      logoUrl: '',
+      jobPostUrl: '',
+      linkedinUrl: '',
+      role: 'fe',
+      status: 'new',
+    }
+  }
   return {
     name: company.name,
     domain: company.domain,
@@ -171,4 +204,37 @@ function toFormValues(company: Company): CompanyValues {
     role: company.role,
     status: company.status,
   }
+}
+
+function ChoiceSelect({
+  id,
+  name,
+  control,
+  items,
+}: {
+  id: string
+  name: 'role' | 'status'
+  control: Control<CompanyValues>
+  items: Record<string, string>
+}) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <Select items={items} value={field.value} onValueChange={field.onChange}>
+          <SelectTrigger id={id} className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(items).map(([value, itemLabel]) => (
+              <SelectItem key={value} value={value}>
+                {itemLabel}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    />
+  )
 }

@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Archive } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 
-import EditCompanySheet from '@/components/EditCompanySheet'
+import { Button } from '@/components/ui/button'
+import CompanyFormSheet from '@/components/CompanyFormSheet'
 import { api } from '@/lib/api'
 import { badge, label, pillClasses } from '@/lib/company-ui'
 import type { Company } from '@/lib/types'
@@ -16,10 +18,16 @@ function LinkedInLogo() {
 
 export default function CompanyDetailPage() {
   const { id } = useParams()
+  const queryClient = useQueryClient()
 
   const { data: company, error } = useQuery({
     queryKey: ['companies', id],
     queryFn: async () => (await api.get<Company>(`/companies/${id}`)).data,
+  })
+
+  const archive = useMutation({
+    mutationFn: () => api.post(`/companies/${id}/archive`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companies'] }),
   })
 
   return (
@@ -28,8 +36,28 @@ export default function CompanyDetailPage() {
         <Link to="/companies" className="text-muted-foreground block w-fit text-sm hover:underline">
           ← Companies
         </Link>
-        {company && <EditCompanySheet company={company} />}
+        {company && (
+          <div className="flex items-center gap-2">
+            {company.status !== 'archived' && (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Archive company"
+                disabled={archive.isPending}
+                onClick={() => archive.mutate()}
+              >
+                <Archive />
+              </Button>
+            )}
+            <CompanyFormSheet company={company} />
+          </div>
+        )}
       </div>
+      {archive.error && (
+        <p role="alert" className="text-destructive text-sm">
+          {archive.error.message}
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-destructive text-sm">
           {error.message}

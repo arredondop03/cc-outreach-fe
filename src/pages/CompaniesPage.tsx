@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
 
+import CompanyFormSheet from '@/components/CompanyFormSheet'
 import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { badge, label, pillClasses } from '@/lib/company-ui'
@@ -11,7 +12,11 @@ const statuses: Company['status'][] = ['new', 'ready_for_sequence', 'active', 'a
 
 export default function CompaniesPage() {
   const [search, setSearch] = useState('')
-  const [selectedStatuses, setSelectedStatuses] = useState<Company['status'][]>(['new', 'ready_for_sequence', 'active'])
+  const [selectedStatuses, setSelectedStatuses] = useState<Company['status'][]>([
+    'new',
+    'ready_for_sequence',
+    'active',
+  ])
 
   const { data: companies, error } = useQuery({
     queryKey: ['companies'],
@@ -28,7 +33,10 @@ export default function CompaniesPage() {
 
   return (
     <div className="space-y-4 p-6">
-      <h1 className="text-2xl font-semibold">Companies</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Companies</h1>
+        <CompanyFormSheet />
+      </div>
       <div className="flex gap-2">
         <Input
           aria-label="Search companies"
